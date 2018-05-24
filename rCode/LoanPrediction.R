@@ -45,30 +45,42 @@ summariseCategCols <- function(x,y){
       df <- rbind(df,df1)
     }
   }
-  return(df)
+  return(df[1:nrow(df)-1,])
 }
+
 
 
 ### READING DATA #### names(train)
 
-train <- fread("./Source/train.csv", na.strings = c("", " ", "  ", "NA", "N/A"))
-test <- fread("./Source/test.csv", na.strings = c("", " ", "  ", "NA", "N/A"))
+train <- fread("./Source/train.csv", na.strings = c("NA", "N/A", "<NA>", ""), strip.white = T)
+test <- fread("./Source/test.csv", na.strings = c("NA", "N/A","<NA>", ""), strip.white = T)
 
 ### DATA ANALYSIS ####
 
 View(t(summaryR(data.frame(train))))
 
-hist(train$ApplicantIncome, xlim = 2)
-?aggregate
+hist(train$ApplicantIncome)
+hist(train$ApplicantIncome[train$ApplicantIncome<2000])
+hist(train$ApplicantIncome, breaks = 48, col = 'red')
 
-aggregate(ApplicantIncome~Education, data=train, FUN = length)
-
-hist(train$ApplicantIncome, breaks = 36, col = 'red')
-
-nrow(train[ApplicantIncome > 30000,])
-
-pairs(Self_Employed ~ ., data = train)
-
-unique(train$Gender)
+### SUMMARIZING THE CATEGORICAL VARIABLES ####
 
 summariseCategCols(train, "Loan_Status")
+
+#### FIXING MISSING VALUES ####
+
+test$Loan_Status <- NA
+completeData <- rbind(train,test)
+
+### FIXING SELF EMPLOYED
+
+summariseCategCols(completeData, "Loan_Status")
+
+completeData[is.na(Self_Employed), Self_Employed:= "No"]
+completeData[is.na(Dependents), Dependents:= "0"]
+completeData[is.na(Married), Married:= "Yes"]
+
+summary(completeData)
+
+plot(completeData$LoanAmount, completeData$ApplicantIncome)
+pairs()
